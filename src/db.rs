@@ -1,5 +1,48 @@
 use postgres::{Client, Error, IsolationLevel};
+use serde::{Serialize, Deserialize};
 use std::sync::Mutex;
+use ini::Ini;
+use crate::db;
+
+pub struct ConnectParams {
+    pub host: String,
+    pub port: u16,
+    pub user: String,
+    pub password: String,
+    pub dbname: String
+}
+
+
+pub fn init_db(db: &mut Client) {
+    db.execute(
+        concat!(
+        r#"CREATE TABLE IF NOT EXISTS person ("#,
+        r#"id SERIAL PRIMARY KEY, "#,
+        r#"name varchar(50), "#,
+        r#"phone varchar(100))"#,
+        ),
+        &[]).unwrap();
+}
+
+
+pub fn params() -> ConnectParams {
+    let conf = Ini::load_from_file("conf.ini").unwrap();
+    let section = conf.section(Some("Connection")).unwrap();
+
+    let host = section.get("host").unwrap();
+    let port = section.get("port").unwrap();
+    let dbname = section.get("dbname").unwrap();
+    let user = section.get("user").unwrap();
+    let password = section.get("password").unwrap();
+
+    db::ConnectParams {
+        host: host.parse().unwrap(),
+        port: port.parse().unwrap(),
+        dbname: dbname.parse().unwrap(),
+        user: user.parse().unwrap(),
+        password: password.parse().unwrap()
+    }
+}
 
 
 pub fn insert(db: &mut Client, name: &str, phone: &str) -> Result<u64, Error> {
@@ -33,6 +76,7 @@ pub fn remove(db: &mut Client, ids: &[i32]) -> Result<(), Error>{
     transaction.commit()
 }
 
+
 pub fn show(db: &mut Client, arg: Option<&str>) -> Result<Vec<Record>, Error>{
     let template = match arg{
         Some(s) => format!("WHERE name LIKE '%{}%'", s),
@@ -61,8 +105,9 @@ pub fn show(db: &mut Client, arg: Option<&str>) -> Result<Vec<Record>, Error>{
 }
 
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Record{
-    id: i32,
+    id: Option<i32>,
     pub name: String,
     pub phone: String,
 }
