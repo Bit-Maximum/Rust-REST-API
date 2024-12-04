@@ -1,0 +1,12 @@
+[package]
+name = "untitled"
+version = "0.1.0"
+edition = "2021"
+authors = ["Maxim Merkurev"]
+
+[dependencies]
+postgres = "0.19.9"
+rust-ini = "0.21.1"
+iron = "0.6.1"
+router = "0.6.0"
+url = "2.5.4"
