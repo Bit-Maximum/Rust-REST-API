@@ -8,6 +8,28 @@ use std::sync::Mutex;
 use crate::db;
 use crate::models::{City, Railway, Road, Person};
 
+
+// Test connection
+pub fn hello_world(sdb: &Mutex<Client>, request: &mut Request) -> IronResult<Response> {
+    let url: url::Url = request.url.clone().into();
+    let mut db = sdb.lock().unwrap();
+    let json_records;
+    if let Ok(result) = db.query("SELECT schema_name FROM information_schema.schemata", &[]) {
+        if let Ok(json) = serde_json::to_string(format!("Hello World! Your URL is {}", url).as_str()) {
+            json_records = Some(json);
+        } else {
+            return Ok(Response::with((status::InternalServerError,
+                                      "couldn't connect to database")));
+        }
+    } else {
+        return Ok(Response::with((status::InternalServerError,
+                                        "couldn't find the database")));
+    }
+    let content_type = Mime(TopLevel::Application, SubLevel::Json, Vec::new());
+
+    Ok(Response::with((content_type, status::Ok, json_records.unwrap())))
+}
+
 // Persons
 // Get all records that`s "name" argument match given template
 pub fn get_records(sdb: &Mutex<Client>, request: &mut Request) -> IronResult<Response> {
@@ -275,63 +297,6 @@ pub fn delete_road(sdb: &Mutex<Client>, request: &mut Request) -> IronResult<Res
     }
 
     if let Ok(_) = db::remove_roads(&mut *sdb.lock().unwrap(), &[id]) {
-        Ok(Response::with(status::NoContent))
-    } else {
-        Ok(Response::with((status::NotFound, "couldn't delete record")))
-    }
-}
-
-
-// Railways
-// Add new railway from given JSON parameters
-pub fn add_railway(sdb: &Mutex<Client>, request: &mut Request) -> IronResult<Response> {
-    let mut body = String::new();
-    request.body.read_to_string(&mut body).unwrap();
-    let decoded: serde_json::Result<Railway> = serde_json::from_str(&body);
-    if let Ok(record) = decoded {
-        if let Ok(_) = db::insert_road(&mut *sdb.lock().unwrap(), record.city_a, record.city_b, record.length) {
-            Ok(Response::with(status::Created))
-        } else {
-            Ok(Response::with((status::InternalServerError, "couldn't insert record")))
-        }
-    } else {
-        return Ok(Response::with((status::BadRequest, "couldn't decode JSON")))
-    }
-}
-
-// Get all railways
-pub fn get_railways(sdb: &Mutex<Client>, request: &mut Request) -> IronResult<Response> {
-    let json_records;
-    if let Ok(records) = db::get_railways(&mut *sdb.lock().unwrap()) {
-        if let Ok(json) = serde_json::to_string(&records) {
-            json_records = Some(json);
-        } else {
-            return Ok(Response::with((status::InternalServerError,
-                                      "couldn't convert records to JSON")));
-        }
-    } else {
-        return Ok(Response::with((status::InternalServerError,
-                                  "couldn't read records from database")));
-    }
-    let content_type = Mime(TopLevel::Application, SubLevel::Json, Vec::new());
-
-    Ok(Response::with((content_type, status::Ok, json_records.unwrap())))
-}
-
-
-// Delete railways with given ID
-pub fn delete_railways(sdb: &Mutex<Client>, request: &mut Request) -> IronResult<Response> {
-    let url: url::Url = request.url.clone().into();
-    let path = url.path_segments().unwrap();
-    let sid: &str = &path.last().unwrap();
-    let id;
-    if let Ok(r) = sid.parse() {
-        id = r;
-    } else {
-        return Ok(Response::with((status::BadRequest, "bad id")));
-    }
-
-    if let Ok(_) = db::remove_railways(&mut *sdb.lock().unwrap(), &[id]) {
         Ok(Response::with(status::NoContent))
     } else {
         Ok(Response::with((status::NotFound, "couldn't delete record")))

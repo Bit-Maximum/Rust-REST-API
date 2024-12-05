@@ -33,8 +33,10 @@ pub fn serve(db: Client) {
 
     define_handlers!(
         sync_db, router,
+        // Hello world
+        [get, "/api/v1/hello", handlers::hello_world, "hello_world"],
         // Person records
-        [get, "/api/v1/records", handlers::get_records, "get_record"],
+        [get, "/api/v1/records", handlers::get_records, "get_records"],
         [get, "/api/v1/records/:id", handlers::get_record, "get_record"],
         [post, "/api/v1/records", handlers::add_record, "add_record"],
         [put, "/api/v1/records/:id", handlers::update_record, "update_record"],
@@ -47,16 +49,11 @@ pub fn serve(db: Client) {
         // Roads
         [get, "/api/v1/roads", handlers::get_roads, "get_roads"],
         [post, "/api/v1/roads", handlers::add_road, "add_road"],
-        [delete, "/api/v1/roads/:id", handlers::delete_road, "delete_road"],
-        // Railways
-        [get, "/api/v1/railways", handlers::get_railways, "get_railways"],
-        [post, "/api/v1/railways", handlers::add_railway, "add_railway"],
-        [delete, "/api/v1/railways/:id", handlers::delete_railways, "delete_railways"]
+        [delete, "/api/v1/roads/:id", handlers::delete_road, "delete_road"]
     );
 
     Iron::new(router).http("localhost:3000").unwrap();
 }
-
 
 
 pub fn add(mut db: &mut Client, args: &Vec<String>) {
