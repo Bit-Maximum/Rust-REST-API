@@ -10,6 +10,7 @@ use postgres::{Client, NoTls};
 mod db;
 mod handlers;
 mod commands;
+mod models;
 
 use commands::*;
 

@@ -18,7 +18,7 @@ macro_rules! register_handler {
     }
 }
 
-
+// Defien
 macro_rules! define_handlers {
     ($connection:ident, $router:ident,
      $( [$method:ident, $route:expr, $handler:path, $route_id:expr]),+ ) => {
@@ -33,11 +33,25 @@ pub fn serve(db: Client) {
 
     define_handlers!(
         sync_db, router,
+        // Person records
         [get, "/api/v1/records", handlers::get_records, "get_record"],
         [get, "/api/v1/records/:id", handlers::get_record, "get_record"],
         [post, "/api/v1/records", handlers::add_record, "add_record"],
         [put, "/api/v1/records/:id", handlers::update_record, "update_record"],
-        [delete, "/api/v1/records/:id", handlers::delete_record, "delete_record"]
+        [delete, "/api/v1/records/:id", handlers::delete_record, "delete_record"],
+        // Cities
+        [get, "/api/v1/cities", handlers::get_cities, "get_cities"],
+        [get, "/api/v1/cities/:name", handlers::get_city, "get_city"],
+        [post, "/api/v1/cities", handlers::add_city, "add_city"],
+        [delete, "/api/v1/cities/:id", handlers::delete_city, "delete_city"],
+        // Roads
+        [get, "/api/v1/roads", handlers::get_roads, "get_roads"],
+        [post, "/api/v1/roads", handlers::add_road, "add_road"],
+        [delete, "/api/v1/roads/:id", handlers::delete_road, "delete_road"],
+        // Railways
+        [get, "/api/v1/railways", handlers::get_railways, "get_railways"],
+        [post, "/api/v1/railways", handlers::add_railway, "add_railway"],
+        [delete, "/api/v1/railways/:id", handlers::delete_railways, "delete_railways"]
     );
 
     Iron::new(router).http("localhost:3000").unwrap();
@@ -49,7 +63,7 @@ pub fn add(mut db: &mut Client, args: &Vec<String>) {
     if args.len() != 4 {
         panic!("Usage: person add NAME PHONE");
     }
-    let r = db::insert(&mut db, &args[2], &args[3])
+    let r = db::insert_person(&mut db, &args[2], &args[3])
         .unwrap();
     println!("{} rows affected", r);
 }
@@ -62,7 +76,7 @@ pub fn del(mut db: &mut Client, args: &Vec<String>) {
         .map(|s| s.parse().unwrap())
         .collect();
 
-    db::remove(&mut db, &ids)
+    db::remove_person(&mut db, &ids)
         .unwrap();
 }
 
@@ -71,7 +85,7 @@ pub fn edit(mut db: &mut Client, args: &Vec<String>) {
         panic!("Usage: person edit ID NAME PHONE");
     }
     let id = args[2].parse().unwrap();
-    db::update(&mut db, id, &args[3], &args[4])
+    db::update_person(&mut db, id, &args[3], &args[4])
         .unwrap();
 }
 
@@ -85,7 +99,7 @@ pub fn show(mut db: &mut Client, args: &Vec<String>) {
     } else {
         s = None;
     }
-    let r = db::show(&mut db, s.as_ref().map(|s| &s[..])).unwrap();
+    let r = db::show_persons(&mut db, s.as_ref().map(|s| &s[..])).unwrap();
     db::format(&r);
 }
 

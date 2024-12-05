@@ -1,8 +1,8 @@
 use postgres::{Client, Error, IsolationLevel};
-use serde::{Serialize, Deserialize};
 use std::sync::Mutex;
 use ini::Ini;
-use crate::db;
+use crate::models::*;
+
 
 pub struct ConnectParams {
     pub host: String,
@@ -22,6 +22,48 @@ pub fn init_db(db: &mut Client) {
         r#"phone varchar(100))"#,
         ),
         &[]).unwrap();
+
+    db.execute(
+        concat!(
+        r#"CREATE TABLE IF NOT EXISTS city ("#,
+        r#"id SERIAL PRIMARY KEY, "#,
+        r#"name varchar(50), "#,
+        r#"latitude real"#,
+        r#"longitude real"#,
+        ),
+        &[]).unwrap();
+
+    db.execute(
+        concat!(
+        r#"CREATE TABLE IF NOT EXISTS road ("#,
+        r#"id SERIAL PRIMARY KEY, "#,
+        r#"city_a varchar(50), "#,
+        r#"city_b varchar(100))"#,
+        r#"length integer"#,
+        r#"CONSTRAINT fk_city_a"#,
+        r#"FOREIGN KEY(city_a)"#,
+        r#"REFERENCES city(id), "#,
+        r#"CONSTRAINT fk_city_b"#,
+        r#"FOREIGN KEY(city_b)"#,
+        r#"REFERENCES city(id)"#,
+        ),
+        &[]).unwrap();
+
+    db.execute(
+        concat!(
+        r#"CREATE TABLE IF NOT EXISTS railway ("#,
+        r#"id SERIAL PRIMARY KEY, "#,
+        r#"city_a varchar(50), "#,
+        r#"city_b varchar(100))"#,
+        r#"length integer"#,
+        r#"CONSTRAINT fk_city_a"#,
+        r#"FOREIGN KEY(city_a)"#,
+        r#"REFERENCES city(id), "#,
+        r#"CONSTRAINT fk_city_b"#,
+        r#"FOREIGN KEY(city_b)"#,
+        r#"REFERENCES city(id)"#,
+        ),
+        &[]).unwrap();
 }
 
 
@@ -35,7 +77,7 @@ pub fn params() -> ConnectParams {
     let user = section.get("user").unwrap();
     let password = section.get("password").unwrap();
 
-    db::ConnectParams {
+    ConnectParams {
         host: host.parse().unwrap(),
         port: port.parse().unwrap(),
         dbname: dbname.parse().unwrap(),
@@ -45,13 +87,13 @@ pub fn params() -> ConnectParams {
 }
 
 
-pub fn insert(db: &mut Client, name: &str, phone: &str) -> Result<u64, Error> {
+pub fn insert_person(db: &mut Client, name: &str, phone: &str) -> Result<u64, Error> {
     db.execute("INSERT INTO person (name, phone) VALUES ($1, $2)",
                &[&name, &phone])
 }
 
 
-pub fn update(db: &mut Client, id: i32, name: &str, phone: &str) -> Result<(), Error>{
+pub fn update_person(db: &mut Client, id: i32, name: &str, phone: &str) -> Result<(), Error>{
     let mut transaction = db.build_transaction()
         .isolation_level(IsolationLevel::RepeatableRead)
         .start()?;
@@ -63,7 +105,7 @@ pub fn update(db: &mut Client, id: i32, name: &str, phone: &str) -> Result<(), E
 }
 
 
-pub fn remove(db: &mut Client, ids: &[i32]) -> Result<(), Error>{
+pub fn remove_person(db: &mut Client, ids: &[i32]) -> Result<(), Error>{
     let mut transaction = db.build_transaction()
         .isolation_level(IsolationLevel::ReadCommitted)
         .start()?;
@@ -77,7 +119,7 @@ pub fn remove(db: &mut Client, ids: &[i32]) -> Result<(), Error>{
 }
 
 
-pub fn show(db: &mut Client, arg: Option<&str>) -> Result<Vec<Record>, Error>{
+pub fn show_persons(db: &mut Client, arg: Option<&str>) -> Result<Vec<Person>, Error>{
     let template = match arg{
         Some(s) => format!("WHERE name LIKE '%{}%'", s),
         None => "".to_owned(),
@@ -94,7 +136,7 @@ pub fn show(db: &mut Client, arg: Option<&str>) -> Result<Vec<Record>, Error>{
     let size = rows.iter().count();
     let mut results = Vec::with_capacity(size);
     for row in rows{
-        let record = Record{
+        let record = Person {
             id: row.get("id"),
             name: row.get("name"),
             phone: row.get("phone"),
@@ -105,15 +147,7 @@ pub fn show(db: &mut Client, arg: Option<&str>) -> Result<Vec<Record>, Error>{
 }
 
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Record{
-    id: Option<i32>,
-    pub name: String,
-    pub phone: String,
-}
-
-
-pub fn format(records: &[Record]) {
+pub fn format(records: &[Person]) {
     let max = records.iter().fold(0, |acc, ref item| {
         if item.name.chars().count() > acc {
             item.name.chars().count()
@@ -127,8 +161,8 @@ pub fn format(records: &[Record]) {
 }
 
 
-pub fn read(sync_db: &Mutex<Client>, name: Option<&str>) -> Result<Vec<Record>, ()> {
-    if let Ok(records) = show(&mut *sync_db.lock().unwrap(), name) {
+pub fn read(sync_db: &Mutex<Client>, name: Option<&str>) -> Result<Vec<Person>, ()> {
+    if let Ok(records) = show_persons(&mut *sync_db.lock().unwrap(), name) {
         Ok(records)
     } else {
         Err(())
@@ -136,7 +170,7 @@ pub fn read(sync_db: &Mutex<Client>, name: Option<&str>) -> Result<Vec<Record>, 
 }
 
 
-pub fn read_one(sync_db: &Mutex<Client>, id: i32) -> Result<Record, ()> {
+pub fn read_one(sync_db: &Mutex<Client>, id: i32) -> Result<Person, ()> {
     let db = &mut *sync_db.lock().unwrap();
     let stmt = db.prepare("SELECT * FROM person WHERE id = $1").unwrap();
     if let Ok(rows) = db.query(&stmt, &[&id]) {
@@ -145,7 +179,7 @@ pub fn read_one(sync_db: &Mutex<Client>, id: i32) -> Result<Record, ()> {
             return Err(());
         }
         let row = iter.next().unwrap();
-        let record = Record {
+        let record = Person {
             id: row.get("id"),
             name: row.get("name"),
             phone: row.get("phone"),
@@ -155,4 +189,158 @@ pub fn read_one(sync_db: &Mutex<Client>, id: i32) -> Result<Record, ()> {
     } else {
         Err(())
     }
+}
+
+pub fn insert_city(db: &mut Client, name: &str, latitude: f32, longitude: f32) -> Result<u64, Error> {
+    db.execute("INSERT INTO city (name, latitude, longitude) VALUES ($1, $2, $3)",
+               &[&name, &latitude, &longitude])
+}
+
+
+pub fn get_cities(db: &mut Client) -> Result<Vec<City>, Error>{
+    let mut transaction = db.build_transaction()
+        .isolation_level(IsolationLevel::RepeatableRead)
+        .start()?;
+
+    let stmt = transaction.prepare("SELECT * FROM city ORDER BY id")?;
+    let rows = transaction.query(&stmt, &[])?;
+    transaction.commit()?;
+
+    let size = rows.iter().count();
+    let mut results = Vec::with_capacity(size);
+    for row in rows{
+        let record = City {
+            id: row.get("id"),
+            name: row.get("name"),
+            latitude: row.get("latitude"),
+            longitude: row.get("longitude"),
+        };
+        results.push(record);
+    }
+    Ok(results)
+}
+
+
+pub fn get_city(sync_db: &Mutex<Client>, name: Option<&str>) -> Result<City, ()>{
+    let db = &mut *sync_db.lock().unwrap();
+    let stmt = db.prepare("SELECT * FROM city WHERE name = $1").unwrap();
+    if let Ok(rows) = db.query(&stmt, &[&name]) {
+        let mut iter = rows.iter();
+        if iter.len() != 1 {
+            return Err(());
+        }
+        let row = iter.next().unwrap();
+        let record = City {
+            id: row.get("id"),
+            name: row.get("name"),
+            latitude: row.get("latitude"),
+            longitude: row.get("longitude"),
+        };
+
+        Ok(record)
+    } else {
+        Err(())
+    }
+}
+
+
+pub fn remove_cities(db: &mut Client, ids: &[i32]) -> Result<(), Error>{
+    let mut transaction = db.build_transaction()
+        .isolation_level(IsolationLevel::ReadCommitted)
+        .start()?;
+
+    let stmt = transaction.prepare("DELETE FROM city WHERE id = $1")?;
+    for id in ids{
+        transaction.execute(&stmt, &[&id])?;
+    }
+
+    transaction.commit()
+}
+
+
+pub fn insert_road(db: &mut Client, city_a: i32, city_b: i32, length: i32) -> Result<u64, Error> {
+    db.execute("INSERT INTO road (city_a, city_b, length) VALUES ($1, $2, $3)",
+               &[&city_a, &city_b, &length])
+}
+
+
+pub fn get_roads(db: &mut Client) -> Result<Vec<Road>, Error>{
+    let mut transaction = db.build_transaction()
+        .isolation_level(IsolationLevel::RepeatableRead)
+        .start()?;
+
+    let stmt = transaction.prepare("SELECT * FROM road ORDER BY id")?;
+    let rows = transaction.query(&stmt, &[])?;
+    transaction.commit()?;
+
+    let size = rows.iter().count();
+    let mut results = Vec::with_capacity(size);
+    for row in rows{
+        let record = Road {
+            id: row.get("id"),
+            city_a: row.get("city_a"),
+            city_b: row.get("city_b"),
+            length: row.get("length"),
+        };
+        results.push(record);
+    }
+    Ok(results)
+}
+
+
+pub fn remove_roads(db: &mut Client, ids: &[i32]) -> Result<(), Error>{
+    let mut transaction = db.build_transaction()
+        .isolation_level(IsolationLevel::ReadCommitted)
+        .start()?;
+
+    let stmt = transaction.prepare("DELETE FROM road WHERE id = $1")?;
+    for id in ids{
+        transaction.execute(&stmt, &[&id])?;
+    }
+
+    transaction.commit()
+}
+
+
+pub fn insert_railway(db: &mut Client, city_a: i32, city_b: i32, length: i32) -> Result<u64, Error> {
+    db.execute("INSERT INTO railway (city_a, city_b, length) VALUES ($1, $2, $3)",
+               &[&city_a, &city_b, &length])
+}
+
+
+pub fn get_railways(db: &mut Client) -> Result<Vec<Railway>, Error>{
+    let mut transaction = db.build_transaction()
+        .isolation_level(IsolationLevel::RepeatableRead)
+        .start()?;
+
+    let stmt = transaction.prepare("SELECT * FROM railway ORDER BY id")?;
+    let rows = transaction.query(&stmt, &[])?;
+    transaction.commit()?;
+
+    let size = rows.iter().count();
+    let mut results = Vec::with_capacity(size);
+    for row in rows{
+        let record = Railway {
+            id: row.get("id"),
+            city_a: row.get("city_a"),
+            city_b: row.get("city_b"),
+            length: row.get("length"),
+        };
+        results.push(record);
+    }
+    Ok(results)
+}
+
+
+pub fn remove_railways(db: &mut Client, ids: &[i32]) -> Result<(), Error>{
+    let mut transaction = db.build_transaction()
+        .isolation_level(IsolationLevel::ReadCommitted)
+        .start()?;
+
+    let stmt = transaction.prepare("DELETE FROM railway WHERE id = $1")?;
+    for id in ids{
+        transaction.execute(&stmt, &[&id])?;
+    }
+
+    transaction.commit()
 }
