@@ -185,13 +185,7 @@ pub fn get_cities(sdb: &Mutex<Client>, request: &mut Request) -> IronResult<Resp
 pub fn get_city(sdb: &Mutex<Client>, request: &mut Request) -> IronResult<Response> {
     let url: url::Url = request.url.clone().into();
     let path = url.path_segments().unwrap();
-    let template: &str = &path.last().unwrap();
-    let name;
-    if let Ok(r) = template.parse() {
-        name = r;
-    } else {
-        return Ok(Response::with((status::BadRequest, "bad name")));
-    }
+    let name = *&path.last();
 
     let json_record;
     if let Ok(recs) = db::get_city(sdb, name) {
@@ -238,9 +232,6 @@ pub fn add_road(sdb: &Mutex<Client>, request: &mut Request) -> IronResult<Respon
     request.body.read_to_string(&mut body).unwrap();
     let decoded: serde_json::Result<Road> = serde_json::from_str(&body);
     if let Ok(record) = decoded {
-        if record.city_a == None || record.city_b == None || record.length == None {
-            return Ok(Response::with((status::BadRequest, "not enough data in given parameters")));
-        }
         if let Ok(_) = db::insert_road(&mut *sdb.lock().unwrap(), record.city_a, record.city_b, record.length) {
             Ok(Response::with(status::Created))
         } else {
@@ -298,9 +289,6 @@ pub fn add_railway(sdb: &Mutex<Client>, request: &mut Request) -> IronResult<Res
     request.body.read_to_string(&mut body).unwrap();
     let decoded: serde_json::Result<Railway> = serde_json::from_str(&body);
     if let Ok(record) = decoded {
-        if record.city_a == None || record.city_b == None || record.length == None {
-            return Ok(Response::with((status::BadRequest, "not enough data in given parameters")));
-        }
         if let Ok(_) = db::insert_road(&mut *sdb.lock().unwrap(), record.city_a, record.city_b, record.length) {
             Ok(Response::with(status::Created))
         } else {
