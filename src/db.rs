@@ -28,8 +28,8 @@ pub fn init_db(db: &mut Client) {
         r#"CREATE TABLE IF NOT EXISTS city ("#,
         r#"id SERIAL PRIMARY KEY, "#,
         r#"name varchar(50), "#,
-        r#"latitude numeric,"#,
-        r#"longitude numeric"#,
+        r#"latitude REAL,"#,
+        r#"longitude REAL);"#,
         ),
         &[]).unwrap();
 
@@ -37,31 +37,15 @@ pub fn init_db(db: &mut Client) {
         concat!(
         r#"CREATE TABLE IF NOT EXISTS road ("#,
         r#"id SERIAL PRIMARY KEY, "#,
-        r#"city_a varchar(50), "#,
-        r#"city_b varchar(100)),"#,
-        r#"length integer,"#,
-        r#"CONSTRAINT fk_city_a"#,
-        r#"FOREIGN KEY(city_a)"#,
+        r#"city_a INTEGER, "#,
+        r#"city_b INTEGER, "#,
+        r#"length INTEGER, "#,
+        r#"CONSTRAINT fk_city_a "#,
+        r#"FOREIGN KEY(city_a) "#,
         r#"REFERENCES city(id), "#,
-        r#"CONSTRAINT fk_city_b"#,
-        r#"FOREIGN KEY(city_b)"#,
-        r#"REFERENCES city(id)"#,
-        ),
-        &[]).unwrap();
-
-    db.execute(
-        concat!(
-        r#"CREATE TABLE IF NOT EXISTS railway ("#,
-        r#"id SERIAL PRIMARY KEY, "#,
-        r#"city_a varchar(50), "#,
-        r#"city_b varchar(100)),"#,
-        r#"length integer,"#,
-        r#"CONSTRAINT fk_city_a"#,
-        r#"FOREIGN KEY(city_a)"#,
-        r#"REFERENCES city(id), "#,
-        r#"CONSTRAINT fk_city_b"#,
-        r#"FOREIGN KEY(city_b)"#,
-        r#"REFERENCES city(id)"#,
+        r#"CONSTRAINT fk_city_b "#,
+        r#"FOREIGN KEY(city_b) "#,
+        r#"REFERENCES city(id)); "#,
         ),
         &[]).unwrap();
 }
@@ -294,50 +278,6 @@ pub fn remove_roads(db: &mut Client, ids: &[i32]) -> Result<(), Error>{
         .start()?;
 
     let stmt = transaction.prepare("DELETE FROM road WHERE id = $1")?;
-    for id in ids{
-        transaction.execute(&stmt, &[&id])?;
-    }
-
-    transaction.commit()
-}
-
-
-pub fn insert_railway(db: &mut Client, city_a: i32, city_b: i32, length: i32) -> Result<u64, Error> {
-    db.execute("INSERT INTO railway (city_a, city_b, length) VALUES ($1, $2, $3)",
-               &[&city_a, &city_b, &length])
-}
-
-
-pub fn get_railways(db: &mut Client) -> Result<Vec<Railway>, Error>{
-    let mut transaction = db.build_transaction()
-        .isolation_level(IsolationLevel::RepeatableRead)
-        .start()?;
-
-    let stmt = transaction.prepare("SELECT * FROM railway ORDER BY id")?;
-    let rows = transaction.query(&stmt, &[])?;
-    transaction.commit()?;
-
-    let size = rows.iter().count();
-    let mut results = Vec::with_capacity(size);
-    for row in rows{
-        let record = Railway {
-            id: row.get("id"),
-            city_a: row.get("city_a"),
-            city_b: row.get("city_b"),
-            length: row.get("length"),
-        };
-        results.push(record);
-    }
-    Ok(results)
-}
-
-
-pub fn remove_railways(db: &mut Client, ids: &[i32]) -> Result<(), Error>{
-    let mut transaction = db.build_transaction()
-        .isolation_level(IsolationLevel::ReadCommitted)
-        .start()?;
-
-    let stmt = transaction.prepare("DELETE FROM railway WHERE id = $1")?;
     for id in ids{
         transaction.execute(&stmt, &[&id])?;
     }

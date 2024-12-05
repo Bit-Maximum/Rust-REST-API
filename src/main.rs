@@ -37,10 +37,9 @@ fn main() {
                 "edit" => edit(&mut db, &args),
                 "show" => show(&mut db, &args),
                 "help" => println!("{}", HELP),
-                "serve" => serve(db),
                 command => panic!("Invalid command: {}", command),
             }
         }
-        None => panic!("No command supplied"),
+        None => serve(db),
     }
 }
