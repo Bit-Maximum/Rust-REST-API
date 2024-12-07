@@ -5,8 +5,12 @@ use serde_json;
 
 use std::io::Read;
 use std::sync::Mutex;
+
 use crate::db;
-use crate::models::{City, Railway, Road, Person};
+use crate::models::{City, Road, Person};
+use crate::algorithm::*;
+
+
 
 
 // Test connection
@@ -14,7 +18,7 @@ pub fn hello_world(sdb: &Mutex<Client>, request: &mut Request) -> IronResult<Res
     let url: url::Url = request.url.clone().into();
     let mut db = sdb.lock().unwrap();
     let json_records;
-    if let Ok(result) = db.query("SELECT schema_name FROM information_schema.schemata", &[]) {
+    if let Ok(_) = db.query("SELECT schema_name FROM information_schema.schemata", &[]) {
         if let Ok(json) = serde_json::to_string(format!("Hello World! Your URL is {}", url).as_str()) {
             json_records = Some(json);
         } else {
@@ -301,4 +305,54 @@ pub fn delete_road(sdb: &Mutex<Client>, request: &mut Request) -> IronResult<Res
     } else {
         Ok(Response::with((status::NotFound, "couldn't delete record")))
     }
+}
+
+
+pub fn get_shortest_path(sdb: &Mutex<Client>, request: &mut Request) -> IronResult<Response> {
+    let url: url::Url = request.url.clone().into();
+    let mut to_city: Option<String> = None;
+    let mut from_city: Option<String> = None;
+    let qp = url.query_pairs();
+    if qp.count() != 2 {
+        return Ok(Response::with((status::BadRequest,
+                                  "passed more or less than two parameters")));
+    }
+    for (k, v) in qp {
+        if k == "to" {
+            to_city = Some(v.to_string());
+        }
+        if k == "from" {
+            from_city = Some(v.to_string());
+        }
+    }
+    if let Err(_) = db::get_city(sdb, Some(&*to_city.clone().unwrap())) {
+        return Ok(Response::with((status::BadRequest, "Can`t found start city with given parameters")));
+    }
+    if let Err(_) = db::get_city(sdb, Some(&*from_city.clone().unwrap())) {
+        return Ok(Response::with((status::BadRequest, "Can`t found destination city with given parameters")));
+    }
+
+    let mut json_records: Option<String> = None;
+    let edges = db::get_roads(&mut *sdb.lock().unwrap());
+    let nodes = db::get_cities(&mut *sdb.lock().unwrap());
+    if let Ok(nodes) = nodes {
+        if let Ok(edges) = edges {
+            let graph = build_graph(nodes, edges);
+            let path = dijkstra(from_city.clone().unwrap(), to_city.clone().unwrap(), graph);
+
+            let cost: i32 = path.get(&*to_city.clone().unwrap()).unwrap().clone().1;
+            let massage = format_path(from_city.unwrap(), to_city.unwrap(), &path);
+            if let Ok(json) = serde_json::to_string(format!("{msg}\nPath length: {cost}",
+                                                            msg=massage, cost=cost).as_str()) {
+                json_records = Some(json);
+            }
+        } else {
+            return Ok(Response::with((status::InternalServerError, "Couldn't get Roads data")));
+        }
+    } else {
+        return Ok(Response::with((status::InternalServerError, "Can`t load Cities data.")));
+    }
+    let content_type = Mime(TopLevel::Application, SubLevel::Json, Vec::new());
+
+    Ok(Response::with((content_type, status::Ok, json_records.unwrap())))
 }

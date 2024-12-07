@@ -118,5 +118,24 @@ def load_data():
     print('--Post roads--')
 
 
+def get_path():
+    r = requests.get('http://localhost:3000/api/v1/hello')
+    print(r.status_code)
+    print(r.text)
+    print('--Test connection--')
+
+
+    r = requests.get('http://localhost:3000/api/v1/path', params={'to': 'Habarovsk', 'from': 'Vladivostok'})
+    print(r.status_code)
+    print(r.text.strip('"').replace('\\n', '\n'))
+    print('--Test 1--')
+
+
+    r = requests.get('http://localhost:3000/api/v1/path', params={'to': 'Fokino', 'from': 'Vladivostok'})
+    print(r.status_code)
+    print(r.text.strip('"').replace('\\n', '\n'))
+    print('--Test 2--')
+
+
 if __name__ == '__main__':
     pass

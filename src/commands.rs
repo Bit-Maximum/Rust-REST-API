@@ -49,7 +49,9 @@ pub fn serve(db: Client) {
         // Roads
         [get, "/api/v1/roads", handlers::get_roads, "get_roads"],
         [post, "/api/v1/roads", handlers::add_road, "add_road"],
-        [delete, "/api/v1/roads/:id", handlers::delete_road, "delete_road"]
+        [delete, "/api/v1/roads/:id", handlers::delete_road, "delete_road"],
+        // Algorithms
+        [get, "/api/v1/path", handlers::get_shortest_path, "get_shortest_path"]
     );
 
     Iron::new(router).http("localhost:3000").unwrap();

@@ -4,6 +4,7 @@ extern crate iron;
 extern crate router;
 extern crate serde;
 extern crate serde_json;
+extern crate priority_queue;
 
 use postgres::{Client, NoTls};
 
@@ -11,6 +12,7 @@ mod db;
 mod handlers;
 mod commands;
 mod models;
+mod algorithm;
 
 use commands::*;
 

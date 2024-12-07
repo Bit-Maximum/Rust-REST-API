@@ -8,16 +8,16 @@ pub struct Person {
 }
 
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct City {
-    pub id: Option<i32>,
+    pub id: i32,
     pub name: String,
     pub latitude: f32,
     pub longitude: f32,
 }
 
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Road {
     pub id: Option<i32>,
     pub city_a: i32,
