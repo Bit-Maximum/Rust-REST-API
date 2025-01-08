@@ -4,7 +4,7 @@ import requests
 
 
 def test_connection():
-    r = requests.get('http://localhost:3000/api/v1/hello')
+    r = requests.get('http://localhost:3000/')
     print(r.status_code)
     print(r.text)
     print('--Test connection--')
@@ -27,7 +27,7 @@ def test_connection():
 
 def load_data():
     # Test connection
-    r = requests.get('http://localhost:3000/api/v1/hello')
+    r = requests.get('http://localhost:3000/')
     print(r.status_code)
     print(r.text)
     print('--Test connection--')
@@ -119,7 +119,7 @@ def load_data():
 
 
 def get_path():
-    r = requests.get('http://localhost:3000/api/v1/hello')
+    r = requests.get('http://localhost:3000/')
     print(r.status_code)
     print(r.text)
     print('--Test connection--')
@@ -138,4 +138,11 @@ def get_path():
 
 
 if __name__ == '__main__':
-    pass
+    test_connection()
+    print("Connection trusted")
+
+    load_data()
+    print("Data loaded")
+
+    get_path()
+    print("Complete")

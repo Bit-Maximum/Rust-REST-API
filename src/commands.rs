@@ -30,13 +30,13 @@ macro_rules! define_handlers {
 pub fn serve(db: Client) {
     let sync_db = Arc::new(Mutex::new(db));
     let mut router = router::Router::new();
+    println!("Serving at http://localhost:3000/");
 
     define_handlers!(
         sync_db, router,
         // Hello world
-        [get, "/api/v1/hello", handlers::hello_world, "hello_world"],
+        [get, "/", handlers::hello_world, "hello_world"],
         // Person records
-        [get, "/api/v1/records", handlers::get_records, "get_records"],
         [get, "/api/v1/records/:id", handlers::get_record, "get_record"],
         [post, "/api/v1/records", handlers::add_record, "add_record"],
         [put, "/api/v1/records/:id", handlers::update_record, "update_record"],
@@ -112,5 +112,4 @@ Commands:
     show STRING    - display records which contain a given substring in the name;
     serve          - start REST API server;
     help           - display this help.";
-
 

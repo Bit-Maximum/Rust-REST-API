@@ -34,7 +34,7 @@ pub fn hello_world(sdb: &Mutex<Client>, request: &mut Request) -> IronResult<Res
     Ok(Response::with((content_type, status::Ok, json_records.unwrap())))
 }
 
-// Persons
+// Users
 // Get all records that`s "name" argument match given template
 pub fn get_records(sdb: &Mutex<Client>, request: &mut Request) -> IronResult<Response> {
     let url: url::Url = request.url.clone().into();
@@ -356,3 +356,26 @@ pub fn get_shortest_path(sdb: &Mutex<Client>, request: &mut Request) -> IronResu
 
     Ok(Response::with((content_type, status::Ok, json_records.unwrap())))
 }
+
+
+
+pub const ROUTS: &'static str = "Available routes:
+Home:
+    GET: / -> This page
+Users records:
+    [get, /api/v1/records/:id, handlers::get_record, get_record],
+    [post, /api/v1/records, handlers::add_record, add_record],
+    [put, /api/v1/records/:id, handlers::update_record, update_record],
+    [delete, /api/v1/records/:id, handlers::delete_record, delete_record]
+Cities records:
+    [get, /api/v1/cities, handlers::get_cities, get_cities],
+    [get, /api/v1/cities/:name, handlers::get_city, get_city],
+    [post, /api/v1/cities, handlers::add_city, add_city],
+    [delete, /api/v1/cities/:id, handlers::delete_city, delete_city]
+Roads records:
+    [get, /api/v1/roads, handlers::get_roads, get_roads],
+    [post, /api/v1/roads, handlers::add_road, add_road],
+    [delete, /api/v1/roads/:id, handlers::delete_road, delete_road]
+Calculations && Algorithms:
+    Get shortest path from one City to Another (by Dijkstra algorithm)
+    [get, /api/v1/path, handlers::get_shortest_path, get_shortest_path]";
