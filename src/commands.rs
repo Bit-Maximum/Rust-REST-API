@@ -54,7 +54,7 @@ pub fn serve(db: Client) {
         [get, "/api/v1/path", handlers::get_shortest_path, "get_shortest_path"]
     );
 
-    Iron::new(router).http("localhost:3000").unwrap();
+    Iron::new(router).http("0.0.0.0:3000").unwrap();
 }
 
 

@@ -11,7 +11,7 @@ pub fn build_graph(nodes: Vec<City>, edges: Vec<Road>) -> HashMap<String, Vec<(i
     let mut cities: HashMap<i32, String>  = HashMap::new();
 
     for city in nodes.clone() {
-        cities.insert(city.id, city.name.clone());
+        cities.insert(city.id.expect("REASON"), city.name.clone());
         graph.insert(city.name, Vec::new());
     }
     // for (k, v) in cities.clone() {
