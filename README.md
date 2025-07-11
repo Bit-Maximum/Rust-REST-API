@@ -1,7 +1,7 @@
 # 🦀 REST API for Logistics Routing in Rust
 
-[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/Bit-Maximum/rust-rest-api/blob/master/README.md)
-[![ru](https://img.shields.io/badge/lang-ru-blue.svg)](https://github.com/Bit-Maximum/rust-rest-api/blob/master/translation/README.ru.md)
+[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/Bit-Maximum/Rust-Rest-API/blob/master/README.md)
+[![ru](https://img.shields.io/badge/lang-ru-blue.svg)](https://github.com/Bit-Maximum/Rust-Rest-API/blob/master/translation/README.ru.md)
 
 This project is a REST API service written in **Rust** using the **Iron** framework and a **PostgreSQL** database. The service allows you to manage cities and the roads between them, as well as calculate the shortest path between two points using Dijkstra’s algorithm.
 
@@ -22,7 +22,7 @@ A full description of all endpoints and request formats is available in a separa
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/Bit-Maximum/rust-rest-api.git
+git clone https://github.com/Bit-Maximum/Rust-Rest-API.git
 cd rust-rest-api
 ```
 2. Install dependencies:
