@@ -1,7 +1,7 @@
 # 🦀 REST API для логистических перевозок на Rust
 
-[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/Bit-Maximum/rust-rest-api/blob/master/README.md)
-[![ru](https://img.shields.io/badge/lang-ru-blue.svg)](https://github.com/Bit-Maximum/rust-rest-api/blob/master/translation/README.ru.md)
+[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/Bit-Maximum/Rust-Rest-API/blob/master/README.md)
+[![ru](https://img.shields.io/badge/lang-ru-blue.svg)](https://github.com/Bit-Maximum/Rust-Rest-API/blob/master/translation/README.ru.md)
 
 Этот проект представляет собой REST API-сервис, написанный на языке **Rust** с использованием фреймворка **Iron** и базы данных **PostgreSQL**. Сервис позволяет управлять городами, дорогами между ними, а также рассчитывать кратчайший путь между двумя точками с помощью алгоритма Дейкстры.
 
@@ -22,7 +22,7 @@
 
 1. Клонируйте репозиторий:
 ```bash
-git clone https://github.com/Bit-Maximum/rust-rest-api.git
+git clone https://github.com/Bit-Maximum/Rust-Rest-API.git
 cd rust-rest-api
 ```
 2. Установите зависимости:
